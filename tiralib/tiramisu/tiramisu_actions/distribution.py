@@ -51,18 +51,28 @@ class Distribution(TiramisuAction):
             for comp in iterator.computations_list:
                 self.children.append([comp])
         else:
+            # convert every iterator into the computations of its subtree
+            children: list[list[IteratorIdentifier | str]] = []
             for child_list in self.children:
-                for index, child in enumerate(child_list):
-                    # convert an iterator into its comps
+                comps: list[IteratorIdentifier | str] = []
+                for child in child_list:
                     if isinstance(child, tuple):
-                        tmp_iterator = tiramisu_tree.iterators[child]
-                        tmp_iterator_comps = (
-                            tiramisu_tree.get_iterator_subtree_computations(
-                                tmp_iterator.id
-                            )
+                        if child not in tiramisu_tree.iterators:
+                            child = tiramisu_tree.get_iterator_of_computation(
+                                *child
+                            ).id
+                        comps.extend(
+                            tiramisu_tree.get_iterator_subtree_computations(child)
                         )
-                        child_list.pop(index)
-                        child_list.extend(tmp_iterator_comps)
+                    else:
+                        comps.append(child)
+                children.append(comps)
+            self.children = children
+
+        self.comps = sorted(
+            [comp for child_list in self.children for comp in child_list],  # type: ignore[misc]
+            key=lambda comp: tiramisu_tree.computations_absolute_order[comp],
+        )
 
         self.set_string_representations(tiramisu_tree)
 

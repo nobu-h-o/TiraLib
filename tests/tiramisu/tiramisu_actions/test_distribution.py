@@ -155,3 +155,21 @@ def test_distribution_application():
     assert schedule.is_legal()
 
     assert schedule.execute()
+
+
+def test_comps_and_iterator_children():
+    BaseConfig.init()
+    t_tree = test_utils.tree_test_sample_2()
+    # an iterator in the children is replaced by the computations of its subtree
+    distribution = Distribution(
+        [("comp05", 1)], [["comp05", "comp06"], ["comp07", ("comp03", 2)]]
+    )
+    distribution.initialize_action_for_tree(t_tree)
+    assert distribution.children == [["comp05", "comp06"], ["comp07", "comp03", "comp04"]]
+    # comps lists every distributed computation in execution order
+    assert sorted(distribution.comps) == sorted(
+        ["comp03", "comp04", "comp05", "comp06", "comp07"]
+    )
+    assert distribution.comps == sorted(
+        distribution.comps, key=lambda c: t_tree.computations_absolute_order[c]
+    )
