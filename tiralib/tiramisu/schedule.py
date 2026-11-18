@@ -471,17 +471,16 @@ class Schedule:
                         ]
                     )
             elif optimization_str[0] == "E":
-                regex = r"E\(comps=\[([\w', ]*)\]\)"
+                regex = r"E\((?:L(\d+),)?comps=\[([\w', ]*)\]\)"
                 match = re.match(regex, optimization_str)
                 if match:
-                    comp = match.group(1).strip("' ")
-                    schedule.add_optimizations(
-                        [
-                            tiramisu_actions.Expansion(
-                                [comp],
-                            )
-                        ]
+                    comp = match.group(2).strip("' ")
+                    params: list[str] | list[IteratorIdentifier] = (
+                        [comp]
+                        if match.group(1) is None
+                        else [(comp, int(match.group(1)))]
                     )
+                    schedule.add_optimizations([tiramisu_actions.Expansion(params)])
             elif optimization_str[:2] == "TG":
                 raise NotImplementedError
                 # regex =
